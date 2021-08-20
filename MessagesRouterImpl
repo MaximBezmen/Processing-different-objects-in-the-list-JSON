@@ -63,11 +63,11 @@ public class MessagesRouterImpl implements MessagesRouter {
         ResponseEntity responseEntity = null;
         switch (messageType) {
             case LOAD_SURVEY_READ -> {
-                final StormLoadSurveyReadDto stormLoadSurveyReadDto = mapper.readValue(arrayJsonObject.toJSONString(), StormLoadSurveyReadDto.class);
+                final LoadSurveyReadDto stormLoadSurveyReadDto = mapper.readValue(arrayJsonObject.toJSONString(), LoadSurveyReadDto.class);
                 responseEntity = messageProcessor.processMessage(stormLoadSurveyReadDto);
             }
             case EVENT_LOG -> {
-                final StormEventLogDto stormEventLogDto = mapper.readValue(arrayJsonObject.toJSONString(), StormEventLogDto.class);
+                final EventLogDto stormEventLogDto = mapper.readValue(arrayJsonObject.toJSONString(), EventLogDto.class);
                 responseEntity = messageProcessor.processMessage(stormEventLogDto);
             }
             case TIME_OF_USE -> log.info(UNSUPPORTED_OPERATION);
