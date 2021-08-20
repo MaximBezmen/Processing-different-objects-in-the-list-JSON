@@ -1,0 +1,29 @@
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
+
+import java.time.Instant;
+import java.util.List;
+
+/**
+ * @author Maxim Bezmen.
+ * 17.08.2021
+ */
+@Data
+public class LoadSurveyReadDto {
+    @JsonProperty("Type")
+    private MessageType type;
+    @JsonProperty("Version")
+    private Long version;
+    @JsonProperty("Result")
+    private ResultType result;
+    @JsonProperty("Reference")
+    private String reference;
+    @JsonProperty("ReadDateTime")
+    private Instant readDateTime;
+    @JsonProperty("Meter")
+    private MeterDto meter;
+    @JsonProperty("Configuration")
+    private ConfigurationOfLoadSurveyReadDto configuration;
+    @JsonProperty("Intervals")
+    private List<IntervalsOfLoadSurveyReadDto> intervals;
+}
