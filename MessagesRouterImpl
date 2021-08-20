@@ -36,7 +36,7 @@ public class MessagesRouterImpl implements MessagesRouter {
         try {
             final Object obj = parser.parse(body);
             final JSONObject jsonObject = (JSONObject) obj;
-            final JSONArray dataArray = (JSONArray) jsonObject.get(NAME_OF_LIST_FROM_JSON_STORM);
+            final JSONArray dataArray = (JSONArray) jsonObject.get(NAME_OF_LIST_FROM_JSON);
             for (Object o : dataArray) {
                 final JSONObject messageFromJson = (JSONObject) o;
                 final MessageType messageTypeFromStorm = MessageType.valueOfByStormName(
