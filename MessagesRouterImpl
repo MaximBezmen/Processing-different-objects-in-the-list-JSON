@@ -1,0 +1,83 @@
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+
+import java.util.Objects;
+
+
+/**
+ * @author Maxim Bezmen.
+ * 18.08.2021
+ */
+@Service
+@Slf4j
+public class MessagesRouterImpl implements MessagesRouter {
+    private final ObjectMapper mapper;
+    private final MessageProcessor messageProcessor;
+
+    public MessagesRouterImpl(final ObjectMapper mapper, MessageProcessor messageProcessor) {
+        this.mapper = mapper;
+        this.messageProcessor = messageProcessor;
+    }
+
+    @Override
+    public ResponseEntity routMessage(final String body) {
+        ResponseEntity responseEntity = ResponseEntity.status(HttpStatus.OK).build();
+        boolean sendStatusOk = false;
+        final JSONParser parser = new JSONParser();
+        try {
+            final Object obj = parser.parse(body);
+            final JSONObject jsonObject = (JSONObject) obj;
+            final JSONArray dataArray = (JSONArray) jsonObject.get(NAME_OF_LIST_FROM_JSON_STORM);
+            for (Object o : dataArray) {
+                final JSONObject messageFromJson = (JSONObject) o;
+                final MessageType messageTypeFromStorm = MessageType.valueOfByStormName(
+                        (String) messageFromJson.get(TYPE_OF_INCOMING_MESSAGE)
+                );
+                responseEntity = sendMessageToProcessor(messageFromJson, messageTypeFromStorm);
+                if (Objects.nonNull(responseEntity) && responseEntity.getStatusCodeValue() == HttpStatus.OK.value()) {
+                    sendStatusOk = true;
+                } else {
+                    log.error(UNSUCCESSFUL, messageTypeFromStorm, messageFromJson.toJSONString());
+                }
+            }
+            if (sendStatusOk) {
+                responseEntity = ResponseEntity.status(HttpStatus.OK).build();
+            }
+            return responseEntity;
+        } catch (JsonProcessingException | ParseException e) {
+            log.error(ERROR_IN_METHOD, "routMessage", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    private ResponseEntity sendMessageToProcessor(final JSONObject arrayJsonObject, final MessageType messageType) throws JsonProcessingException {
+        ResponseEntity responseEntity = null;
+        switch (messageType) {
+            case LOAD_SURVEY_READ -> {
+                final StormLoadSurveyReadDto stormLoadSurveyReadDto = mapper.readValue(arrayJsonObject.toJSONString(), StormLoadSurveyReadDto.class);
+                responseEntity = messageProcessor.processMessage(stormLoadSurveyReadDto);
+            }
+            case EVENT_LOG -> {
+                final StormEventLogDto stormEventLogDto = mapper.readValue(arrayJsonObject.toJSONString(), StormEventLogDto.class);
+                responseEntity = messageProcessor.processMessage(stormEventLogDto);
+            }
+            case TIME_OF_USE -> log.info(UNSUPPORTED_OPERATION);
+            case ALARM_NOTIFICATION -> log.info(UNSUPPORTED_OPERATION);
+            case COMMISSIONING -> log.info(UNSUPPORTED_OPERATION);
+            case INSTANTANEOUS_VALUES -> log.info(UNSUPPORTED_OPERATION);
+            case PROVISIONING -> log.info(UNSUPPORTED_OPERATION);
+            case RELAY_CHANGED -> log.info(UNSUPPORTED_OPERATION);
+            default -> log.info(UNSUPPORTED_OPERATION);
+        }
+        return responseEntity;
+    }
+}
